@@ -269,6 +269,8 @@ If a source is unavailable, times out, or lacks fields required by a strategy, A
 | `low_volatility_quality` | Quality | Defensive quality screen using daily volatility, drawdown, ATR, and data-quality controls |
 | `capital_heat` | Momentum | Active capital flow without extreme overheating |
 | `main_force` | Momentum | Host-supplied 90-day iWencai interval main-fund inflow candidates |
+| `low_price_bull` | Growth | Host-validated low-price, high-profit-growth candidates ranked by lower amount |
+| `small_cap_growth` | Growth | Host-validated small-cap candidates with revenue and net-profit growth gates |
 | `oversold_reversal` | Reversal | Repair candidates with controlled drawdown and still-valid liquidity |
 | `balanced_alpha` | Framework | General multi-factor discovery strategy |
 | `momentum_quality` | Framework | Trend confirmation plus quality filters |

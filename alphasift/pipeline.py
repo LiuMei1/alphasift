@@ -132,7 +132,7 @@ def screen(
     # 2. Fetch snapshot, or consume an explicitly supplied host candidate pool.
     snapshot_df = _load_host_initial_candidates(context, strategy=strategy, market=market)
     if snapshot_df is None:
-        if strategy in {"main_force", "low_price_bull"}:
+        if strategy in {"main_force", "low_price_bull", "small_cap_growth"}:
             raise RuntimeError(f"Strategy {strategy} requires a host initial candidate pool")
         snapshot_df = fetch_snapshot_with_fallback(
             config.snapshot_source_priority,
@@ -510,8 +510,11 @@ def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
             total_mv=_safe_float(row.get("total_mv", row.get("总市值"))),
             main_fund_inflow_cny=_safe_float(row.get("main_fund_inflow_cny")),
             range_change_pct=_safe_float(row.get("range_change_pct")),
+            revenue_yoy=_safe_float(row.get("revenue_yoy")),
             net_profit_yoy=_safe_float(row.get("net_profit_yoy")),
             report_period=_safe_text(row.get("report_period")),
+            revenue_report_period=_safe_text(row.get("revenue_report_period")),
+            net_profit_report_period=_safe_text(row.get("net_profit_report_period")),
             trade_date=_safe_text(row.get("trade_date")),
             market=_safe_text(row.get("market")),
             board=_safe_text(row.get("board")),

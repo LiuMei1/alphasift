@@ -160,12 +160,17 @@ def _news_results(news_payload: Any) -> list[dict[str, Any]]:
     return []
 
 
+# 仅使用有效行情、基本面和新闻构建候选增强摘要。
 def _build_dsa_summary(pick: Pick, context: dict[str, Any], news: list[dict[str, Any]]) -> str:
     parts: list[str] = []
     quote = context.get("quote") if isinstance(context.get("quote"), dict) else {}
     price = quote.get("price") if quote else pick.price
     change_pct = quote.get("change_pct") if quote else pick.change_pct
-    if price not in (None, ""):
+    try:
+        valid_price = float(price) > 0
+    except (TypeError, ValueError):
+        valid_price = False
+    if valid_price:
         text = f"DSA行情: 现价 {price}"
         if change_pct not in (None, ""):
             text += f", 涨跌幅 {change_pct}%"

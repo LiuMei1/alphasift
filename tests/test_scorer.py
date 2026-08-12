@@ -253,3 +253,25 @@ def test_stability_factor_penalizes_high_daily_volatility_and_deep_drawdown():
 
     assert scored.loc["controlled", "factor_stability_score"] > scored.loc["wild", "factor_stability_score"]
     assert scored.loc["controlled", "screen_score"] > scored.loc["wild", "screen_score"]
+
+
+# 验证小市值因子与既有大市值 size 因子保持相反且互不改写的方向。
+def test_small_cap_factor_favors_smaller_market_cap_without_changing_size_factor():
+    df = pd.DataFrame([
+        {"code": "small", "total_mv": 1_000_000_000},
+        {"code": "large", "total_mv": 5_000_000_000},
+        {"code": "invalid", "total_mv": 0},
+    ])
+
+    small_cap = compute_screen_scores(
+        df,
+        ScreeningConfig(factor_weights={"small_cap": 1.0}),
+    ).set_index("code")
+    size = compute_screen_scores(
+        df,
+        ScreeningConfig(factor_weights={"size": 1.0}),
+    ).set_index("code")
+
+    assert small_cap.loc["small", "factor_small_cap_score"] > small_cap.loc["large", "factor_small_cap_score"]
+    assert small_cap.loc["invalid", "factor_small_cap_score"] == 0
+    assert size.loc["large", "factor_size_score"] > size.loc["small", "factor_size_score"]

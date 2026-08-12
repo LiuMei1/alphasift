@@ -62,8 +62,11 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
                     risk_level="medium",
                     risk_flags=["valuation"],
                     price=1688.0,
+                    revenue_yoy=18.6,
                     net_profit_yoy=125.3,
                     report_period="2026-03-31",
+                    revenue_report_period="2026-03-31",
+                    net_profit_report_period="2025-12-31",
                     source="iwencai",
                     source_status="partial",
                     source_observed_at="2026-08-12T06:00:00+00:00",
@@ -103,8 +106,11 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
     assert payload["candidates"][0]["llm_thesis"] == "LLM likes the setup"
     assert payload["candidates"][0]["reason"] == "LLM likes the setup"
     assert payload["candidates"][0]["price"] == 1688.0
+    assert payload["candidates"][0]["revenue_yoy"] == 18.6
     assert payload["candidates"][0]["net_profit_yoy"] == 125.3
     assert payload["candidates"][0]["report_period"] == "2026-03-31"
+    assert payload["candidates"][0]["revenue_report_period"] == "2026-03-31"
+    assert payload["candidates"][0]["net_profit_report_period"] == "2025-12-31"
     assert payload["candidates"][0]["source"] == "iwencai"
     assert payload["candidates"][0]["source_status"] == "partial"
     assert payload["candidates"][0]["industry"] == "Baijiu"

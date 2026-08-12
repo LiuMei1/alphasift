@@ -428,3 +428,33 @@ def test_ranking_prompt_includes_low_price_bull_source_fields():
     assert "source_status=partial" in prompt
     assert "data_complete=False" in prompt
     assert "low_amount" in prompt
+
+
+# 验证小市值策略的增长率和独立报告期进入 LLM 候选上下文。
+def test_ranking_prompt_includes_small_cap_growth_fields():
+    prompt = _build_ranking_prompt(
+        [Pick(
+            rank=1,
+            code="600001",
+            name="小市值样本",
+            final_score=90,
+            screen_score=90,
+            total_mv=3_200_000_000,
+            revenue_yoy=18.3,
+            net_profit_yoy=125.6,
+            revenue_report_period="2026-03-31",
+            net_profit_report_period="2025-12-31",
+            source="iwencai",
+            factor_scores={"small_cap": 96.0},
+        )],
+        hints="小市值和增长率是固定硬门槛。",
+        context="",
+    )
+
+    assert "revenue_yoy=18.3%" in prompt
+    assert "net_profit_yoy=125.6%" in prompt
+    assert "revenue_report_period=2026-03-31" in prompt
+    assert "net_profit_report_period=2025-12-31" in prompt
+    assert "small_cap" in prompt
+    assert "price=unknown" in prompt
+    assert "amount=unknown" in prompt

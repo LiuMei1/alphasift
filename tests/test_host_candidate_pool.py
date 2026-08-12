@@ -133,7 +133,61 @@ def test_low_price_bull_consumes_host_fields_and_favors_lower_amount(monkeypatch
     assert result.picks[0].source_status == "partial"
 
 
-@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull"])
+# 验证小市值策略保留两项增长率和各自报告期并按小市值方向评分。
+def test_small_cap_growth_consumes_host_fields_and_favors_smaller_market_cap(monkeypatch):
+    monkeypatch.setattr(
+        "alphasift.pipeline.fetch_snapshot_with_fallback",
+        lambda *_args, **_kwargs: pytest.fail("snapshot provider must not run"),
+    )
+
+    def get_initial_candidates(*, strategy: str, market: str):
+        assert strategy == "small_cap_growth"
+        assert market == "cn"
+        return {
+            "status": "partial",
+            "source": "iwencai",
+            "warnings": ["optional_fields_missing:net_profit_report_period"],
+            "candidates": [
+                {
+                    "code": "000001",
+                    "name": "更小市值",
+                    "total_mv": 1_500_000_000,
+                    "revenue_yoy": 10.0,
+                    "net_profit_yoy": 100.0,
+                    "revenue_report_period": "2026-03-31",
+                    "net_profit_report_period": "2025-12-31",
+                    "source": "iwencai",
+                },
+                {
+                    "code": "600000",
+                    "name": "较大市值",
+                    "total_mv": 4_500_000_000,
+                    "revenue_yoy": 20.0,
+                    "net_profit_yoy": 150.0,
+                    "revenue_report_period": "2026-03-31",
+                    "net_profit_report_period": "2026-03-31",
+                    "source": "iwencai",
+                },
+            ],
+        }
+
+    result = screen(
+        "small_cap_growth",
+        max_output=2,
+        use_llm=False,
+        context={"host": {"contract_version": "1", "get_initial_candidates": get_initial_candidates}},
+        config=_config(),
+    )
+
+    assert [pick.code for pick in result.picks] == ["000001", "600000"]
+    assert result.picks[0].factor_scores["small_cap"] > result.picks[1].factor_scores["small_cap"]
+    assert result.picks[0].revenue_yoy == 10.0
+    assert result.picks[0].net_profit_yoy == 100.0
+    assert result.picks[0].revenue_report_period == "2026-03-31"
+    assert result.picks[0].net_profit_report_period == "2025-12-31"
+
+
+@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull", "small_cap_growth"])
 def test_host_only_strategy_rejects_missing_host_context(monkeypatch, strategy):
     monkeypatch.setattr(
         "alphasift.pipeline.fetch_snapshot_with_fallback",

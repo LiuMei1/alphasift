@@ -1,0 +1,37 @@
+# 小市值策略
+name: small_cap_growth
+display_name: 小市值策略
+description: 关注总市值不超过 50 亿元、营收同比不低于 10% 且净利润同比不低于 100% 的沪深主板成长候选
+version: "1.0"
+category: growth
+tags: [growth, small_cap, iwencai]
+style:
+  risk_profile: aggressive
+  holding_period: medium_term
+  execution_style: selective
+  market_regime: [risk_on, neutral]
+  capital_profile: low_liquidity
+  ui_badge: 小市值
+
+screening:
+  enabled: true
+  market_scope: [cn]
+  hard_filters:
+    exclude_st: true
+    market_cap_min: 0
+    market_cap_max: 5000000000
+  factor_weights:
+    small_cap: 0.65
+    stability: 0.20
+    value: 0.10
+    liquidity: 0.05
+  ranking_hints: |
+    总市值大于 0 且不超过 50 亿元、最新已披露营业收入同比增长不低于 10%、最新已披露净利润同比增长不低于 100%，是宿主候选池已严格复核的固定门槛，不得放宽或改写。
+    优先关注：
+    1. 净利润高增长是否来自低基数、非经常性损益、资产处置或会计口径变化
+    2. 营收增长与净利润增长是否匹配
+    3. 两项增长指标的报告期是否一致、是否过旧
+    4. 小市值公司的流动性、业绩波动、治理和退市风险
+    5. 估值、行业景气、公告、新闻与增长数据是否相互冲突
+    6. 最终组合是否过度集中于同一行业或题材
+  max_output: 20

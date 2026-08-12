@@ -4,6 +4,8 @@ import pandas as pd
 import pytest
 
 from alphasift.config import Config
+from alphasift.dsa_provider import _build_dsa_summary
+from alphasift.models import Pick
 from alphasift.pipeline import screen
 from alphasift.ranker import LLMRankingResult
 
@@ -22,6 +24,20 @@ def _make_config() -> Config:
         dsa_force_refresh=False,
         dsa_notify=False,
     )
+
+
+# 验证缺失行情不会在 DSA 摘要中伪装为零价格。
+def test_dsa_summary_omits_missing_price_placeholder():
+    pick = Pick(rank=1, code="600001", name="样本", final_score=80, screen_score=80)
+
+    summary = _build_dsa_summary(
+        pick,
+        {"fundamentals": {"coverage": {"growth": "available"}}},
+        [],
+    )
+
+    assert "现价 0" not in summary
+    assert "DSA基本面覆盖: growth" in summary
 
 
 def test_screen_requires_dsa_url_when_deep_analysis_enabled(monkeypatch):

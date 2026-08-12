@@ -44,8 +44,22 @@ def test_list_strategies_returns_enabled_strategies_only():
         "oversold_reversal",
         "quality_value",
         "shrink_pullback",
+        "small_cap_growth",
         "volume_breakout",
     ]
+
+
+# 验证小市值策略在仓库与包内两套策略目录均可加载。
+@pytest.mark.parametrize(
+    "path",
+    [Path("strategies/small_cap_growth.yaml"), Path("alphasift/strategies/small_cap_growth.yaml")],
+)
+def test_small_cap_growth_loads_from_both_strategy_directories(path):
+    strategy = load_strategy(path)
+
+    assert strategy.name == "small_cap_growth"
+    assert strategy.screening.factor_weights["small_cap"] == pytest.approx(0.65)
+    assert strategy.screening.market_scope == ["cn"]
 
 
 def test_dual_low_strategy_uses_dynamic_snapshot_signals():

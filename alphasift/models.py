@@ -124,8 +124,11 @@ class Pick:
     total_mv: float | None = None
     main_fund_inflow_cny: float | None = None
     range_change_pct: float | None = None
+    revenue_yoy: float | None = None
     net_profit_yoy: float | None = None
     report_period: str = ""
+    revenue_report_period: str = ""
+    net_profit_report_period: str = ""
     trade_date: str = ""
     market: str = ""
     board: str = ""

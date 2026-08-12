@@ -321,7 +321,10 @@ def _build_bounded_ranking_prompt(
     return prompt[:max_chars]
 
 
+# 将候选字段格式化为不伪造缺失数值的 LLM 上下文。
 def _format_candidate_for_prompt(p: Pick, *, detail: str = "full") -> str:
+    price_text = p.price if p.price and p.price > 0 else "unknown"
+    amount_text = f"{p.amount:.0f}" if p.amount and p.amount > 0 else "unknown"
     if detail == "identity":
         return (
             f"- {p.code} {p.name}: rank={p.rank}, "
@@ -329,17 +332,23 @@ def _format_candidate_for_prompt(p: Pick, *, detail: str = "full") -> str:
         )
     if detail == "compact":
         return (
-            f"- {p.code} {p.name}: rank={p.rank}, price={p.price}, "
-            f"change_pct={p.change_pct}%, amount={p.amount:.0f}, "
+            f"- {p.code} {p.name}: rank={p.rank}, price={price_text}, "
+            f"change_pct={p.change_pct}%, amount={amount_text}, "
             f"screen_score={p.screen_score:.1f}, industry={p.industry or 'unknown'}, "
             f"concepts={p.concepts or 'unknown'}, board_heat_score={p.board_heat_score}, "
+            f"revenue_yoy={p.revenue_yoy}%, net_profit_yoy={p.net_profit_yoy}%, "
+            f"revenue_report_period={p.revenue_report_period or 'unknown'}, "
+            f"net_profit_report_period={p.net_profit_report_period or 'unknown'}, "
             f"signal_score={p.signal_score}, dsa_context={_format_dsa_context_for_prompt(p)}"
         )
     return (
-        f"- {p.code} {p.name}: price={p.price}, change_pct={p.change_pct}%, "
-        f"amount={p.amount:.0f}, turnover={p.turnover_rate}, volume_ratio={p.volume_ratio}, "
+        f"- {p.code} {p.name}: price={price_text}, change_pct={p.change_pct}%, "
+        f"amount={amount_text}, turnover={p.turnover_rate}, volume_ratio={p.volume_ratio}, "
         f"total_mv={p.total_mv}, PE={p.pe_ratio}, PB={p.pb_ratio}, "
-        f"net_profit_yoy={p.net_profit_yoy}%, report_period={p.report_period or 'unknown'}, "
+        f"revenue_yoy={p.revenue_yoy}%, net_profit_yoy={p.net_profit_yoy}%, "
+        f"report_period={p.report_period or 'unknown'}, "
+        f"revenue_report_period={p.revenue_report_period or 'unknown'}, "
+        f"net_profit_report_period={p.net_profit_report_period or 'unknown'}, "
         f"source={p.source or 'unknown'}, source_status={p.source_status or 'unknown'}, source_observed_at={p.source_observed_at or 'unknown'}, "
         f"data_complete={p.data_complete}, missing_optional_fields={p.missing_optional_fields}, "
         f"industry={p.industry or 'unknown'}, concepts={p.concepts or 'unknown'}, "
