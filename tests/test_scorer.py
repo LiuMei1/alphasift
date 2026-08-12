@@ -19,6 +19,23 @@ def test_main_force_factor_favors_higher_interval_inflow():
     assert scored.loc["high", "factor_main_force_score"] > scored.loc["low", "factor_main_force_score"]
 
 
+# 验证低成交额因子只奖励更小的有效正成交额。
+def test_low_amount_factor_favors_lower_positive_amount():
+    df = pd.DataFrame([
+        {"code": "low", "amount": 10_000_000},
+        {"code": "high", "amount": 100_000_000},
+        {"code": "invalid", "amount": 0},
+    ])
+
+    scored = compute_screen_scores(
+        df,
+        ScreeningConfig(factor_weights={"low_amount": 1.0}),
+    ).set_index("code")
+
+    assert scored.loc["low", "factor_low_amount_score"] > scored.loc["high", "factor_low_amount_score"]
+    assert scored.loc["invalid", "factor_low_amount_score"] == 0
+
+
 def test_value_factor_favors_lower_positive_pe_and_pb():
     df = pd.DataFrame(
         [

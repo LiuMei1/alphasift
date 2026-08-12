@@ -16,6 +16,7 @@ _FACTOR_COLUMNS = {
     "theme_heat": "factor_theme_heat_score",
     "topic_alignment": "factor_topic_alignment_score",
     "main_force": "factor_main_force_score",
+    "low_amount": "factor_low_amount_score",
 }
 _DEFAULT_SCORING_PROFILE = {
     "momentum_base": 60.0,
@@ -148,6 +149,7 @@ def _compute_factor_scores(df: pd.DataFrame, config: ScreeningConfig | None = No
         "theme_heat": _compute_theme_heat_score(df, profile),
         "topic_alignment": _compute_topic_alignment_score(df, profile),
         "main_force": _compute_main_force_score(df),
+        "low_amount": _compute_low_amount_score(df),
     }
 
 
@@ -165,6 +167,15 @@ def _compute_main_force_score(df: pd.DataFrame) -> pd.Series:
     headroom_score = (100 - range_change.clip(lower=-70, upper=30).add(70)).clip(0, 100)
     headroom_score = headroom_score.where(range_change.notna(), 0)
     return (inflow_score * 0.85 + headroom_score * 0.15).clip(0, 100)
+
+
+# 按候选池内成交额从小到大计算低成交额因子分。
+def _compute_low_amount_score(df: pd.DataFrame) -> pd.Series:
+    if "amount" not in df.columns:
+        return pd.Series(0.0, index=df.index)
+
+    amount = pd.to_numeric(df["amount"], errors="coerce")
+    return _rank_score(amount.where(amount > 0), lower_is_better=True, na_score=0)
 
 
 def _scoring_profile(config: ScreeningConfig) -> dict[str, float]:

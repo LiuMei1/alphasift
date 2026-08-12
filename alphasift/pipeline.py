@@ -132,6 +132,8 @@ def screen(
     # 2. Fetch snapshot, or consume an explicitly supplied host candidate pool.
     snapshot_df = _load_host_initial_candidates(context, strategy=strategy, market=market)
     if snapshot_df is None:
+        if strategy in {"main_force", "low_price_bull"}:
+            raise RuntimeError(f"Strategy {strategy} requires a host initial candidate pool")
         snapshot_df = fetch_snapshot_with_fallback(
             config.snapshot_source_priority,
             required_columns=_required_snapshot_columns(snapshot_filters),
@@ -508,6 +510,19 @@ def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
             total_mv=_safe_float(row.get("total_mv", row.get("总市值"))),
             main_fund_inflow_cny=_safe_float(row.get("main_fund_inflow_cny")),
             range_change_pct=_safe_float(row.get("range_change_pct")),
+            net_profit_yoy=_safe_float(row.get("net_profit_yoy")),
+            report_period=_safe_text(row.get("report_period")),
+            trade_date=_safe_text(row.get("trade_date")),
+            market=_safe_text(row.get("market")),
+            board=_safe_text(row.get("board")),
+            source=_safe_text(row.get("source")),
+            source_status=_safe_text(row.get("source_status")),
+            source_observed_at=_safe_text(row.get("source_observed_at")),
+            source_fields=(
+                dict(row.get("source_fields"))
+                if isinstance(row.get("source_fields"), dict)
+                else {}
+            ),
             data_complete=bool(row.get("data_complete", True)),
             missing_optional_fields=(
                 list(row.get("missing_optional_fields"))
@@ -583,6 +598,8 @@ def _load_host_initial_candidates(
             detail = str(payload.get("message") or "host candidate pool unavailable")
             raise RuntimeError(f"Host initial candidate pool {status}: {detail}")
         frame = pd.DataFrame(payload.get("candidates") or [])
+        if "source_status" not in frame.columns:
+            frame["source_status"] = status
         metadata = payload
     else:
         raise TypeError("Host initial candidate pool must be a DataFrame or mapping")

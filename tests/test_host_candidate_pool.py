@@ -78,6 +78,72 @@ def test_screen_consumes_host_initial_candidate_pool(monkeypatch):
     assert "optional_fields_missing:pb" in result.degradation
 
 
+# 验证低价擒牛消费宿主字段并按低成交额因子排序。
+def test_low_price_bull_consumes_host_fields_and_favors_lower_amount(monkeypatch):
+    monkeypatch.setattr(
+        "alphasift.pipeline.fetch_snapshot_with_fallback",
+        lambda *_args, **_kwargs: pytest.fail("snapshot provider must not run"),
+    )
+
+    def get_initial_candidates(*, strategy: str, market: str):
+        assert strategy == "low_price_bull"
+        assert market == "cn"
+        return {
+            "status": "partial",
+            "source": "iwencai",
+            "warnings": ["report_period_unrecognized"],
+            "candidates": [
+                {
+                    "code": "000001",
+                    "name": "低成交额",
+                    "price": 9.99,
+                    "net_profit_yoy": 100.0,
+                    "amount": 10_000_000,
+                    "report_period": "2026-03-31",
+                    "source": "iwencai",
+                    "source_observed_at": "2026-08-12T06:00:00+00:00",
+                    "data_complete": True,
+                },
+                {
+                    "code": "600000",
+                    "name": "高成交额",
+                    "price": 8.50,
+                    "net_profit_yoy": 120.0,
+                    "amount": 100_000_000,
+                    "source": "iwencai",
+                    "data_complete": False,
+                    "missing_optional_fields": ["report_period"],
+                },
+            ],
+        }
+
+    result = screen(
+        "low_price_bull",
+        max_output=2,
+        use_llm=False,
+        context={"host": {"contract_version": "1", "get_initial_candidates": get_initial_candidates}},
+        config=_config(),
+    )
+
+    assert [pick.code for pick in result.picks] == ["000001", "600000"]
+    assert result.picks[0].factor_scores["low_amount"] > result.picks[1].factor_scores["low_amount"]
+    assert result.picks[0].net_profit_yoy == 100.0
+    assert result.picks[0].report_period == "2026-03-31"
+    assert result.picks[0].source == "iwencai"
+    assert result.picks[0].source_status == "partial"
+
+
+@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull"])
+def test_host_only_strategy_rejects_missing_host_context(monkeypatch, strategy):
+    monkeypatch.setattr(
+        "alphasift.pipeline.fetch_snapshot_with_fallback",
+        lambda *_args, **_kwargs: pytest.fail("snapshot provider must not run"),
+    )
+
+    with pytest.raises(RuntimeError, match="requires a host initial candidate pool"):
+        screen(strategy, max_output=2, use_llm=False, config=_config())
+
+
 # 验证宿主显式不可用不会静默回退到 AlphaSift 普通快照。
 def test_screen_fails_when_host_candidate_pool_is_unavailable(monkeypatch):
     monkeypatch.setattr(

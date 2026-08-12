@@ -1,0 +1,34 @@
+# 低价擒牛策略
+name: low_price_bull
+display_name: 低价擒牛
+description: 关注股价低于 10 元、最新已披露净利润同比增长不低于 100%，且成交额相对较小的沪深主板成长候选
+version: "1.0"
+category: growth
+tags: [growth, low_price, low_amount, iwencai]
+style:
+  risk_profile: balanced
+  holding_period: medium_term
+  execution_style: selective
+  market_regime: [risk_on, neutral]
+  capital_profile: low_liquidity
+  ui_badge: 低价
+
+screening:
+  enabled: true
+  market_scope: [cn]
+  hard_filters:
+    exclude_st: true
+  factor_weights:
+    low_amount: 0.65
+    stability: 0.20
+    value: 0.10
+    size: 0.05
+  ranking_hints: |
+    股价低于 10 元和最新已披露净利润同比增长不低于 100% 是宿主候选池已严格复核的固定门槛，不得放宽或改写。
+    优先关注：
+    1. 净利润高增长的可持续性，以及低基数、一次性损益和资产处置风险
+    2. 最新报告期距离当前时间的远近及数据完整性
+    3. 低成交额带来的流动性不足和交易冲击风险
+    4. 估值、行业景气、盈利质量、公告和新闻上下文之间的冲突
+    5. 最终组合是否过度集中于同一行业或题材
+  max_output: 20

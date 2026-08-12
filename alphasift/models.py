@@ -124,6 +124,15 @@ class Pick:
     total_mv: float | None = None
     main_fund_inflow_cny: float | None = None
     range_change_pct: float | None = None
+    net_profit_yoy: float | None = None
+    report_period: str = ""
+    trade_date: str = ""
+    market: str = ""
+    board: str = ""
+    source: str = ""
+    source_status: str = ""
+    source_observed_at: str = ""
+    source_fields: dict[str, Any] = field(default_factory=dict)
     data_complete: bool = True
     missing_optional_fields: list[str] = field(default_factory=list)
     turnover_rate: float | None = None

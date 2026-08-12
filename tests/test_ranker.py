@@ -396,3 +396,35 @@ def test_ranking_prompt_is_bounded_and_keeps_required_fields():
     assert "prompt_trimmed" in prompt
     assert degradation
     assert degradation[0].startswith("LLM ranking prompt truncated:")
+
+
+# 验证低价擒牛来源、报告期、增长率和完整性进入 LLM 候选上下文。
+def test_ranking_prompt_includes_low_price_bull_source_fields():
+    prompt = _build_ranking_prompt(
+        [Pick(
+            rank=1,
+            code="600001",
+            name="低价样本",
+            final_score=90,
+            screen_score=90,
+            price=9.99,
+            amount=25_000_000,
+            net_profit_yoy=125.3,
+            report_period="2026-03-31",
+            source="iwencai",
+            source_status="partial",
+            source_observed_at="2026-08-12T06:30:00+00:00",
+            data_complete=False,
+            missing_optional_fields=["industry"],
+            factor_scores={"low_amount": 96.0},
+        )],
+        hints="价格和增长率是固定硬门槛。",
+        context="",
+    )
+
+    assert "net_profit_yoy=125.3%" in prompt
+    assert "report_period=2026-03-31" in prompt
+    assert "source=iwencai" in prompt
+    assert "source_status=partial" in prompt
+    assert "data_complete=False" in prompt
+    assert "low_amount" in prompt

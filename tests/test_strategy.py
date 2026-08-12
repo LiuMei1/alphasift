@@ -37,6 +37,7 @@ def test_list_strategies_returns_enabled_strategies_only():
         "blue_chip_income",
         "capital_heat",
         "dual_low",
+        "low_price_bull",
         "low_volatility_quality",
         "main_force",
         "momentum_quality",
