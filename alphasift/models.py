@@ -122,6 +122,10 @@ class Pick:
     change_pct: float = 0.0
     amount: float = 0.0
     total_mv: float | None = None
+    main_fund_inflow_cny: float | None = None
+    range_change_pct: float | None = None
+    data_complete: bool = True
+    missing_optional_fields: list[str] = field(default_factory=list)
     turnover_rate: float | None = None
     volume_ratio: float | None = None
     pe_ratio: float | None = None

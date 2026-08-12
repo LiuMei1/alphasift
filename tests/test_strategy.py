@@ -38,6 +38,7 @@ def test_list_strategies_returns_enabled_strategies_only():
         "capital_heat",
         "dual_low",
         "low_volatility_quality",
+        "main_force",
         "momentum_quality",
         "oversold_reversal",
         "quality_value",

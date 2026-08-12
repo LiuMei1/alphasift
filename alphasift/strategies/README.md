@@ -30,6 +30,7 @@
 | `quality_value.yaml` | 稳健价值 | value | 估值合理、流动性充足、波动不过热，并要求温和动态确认 |
 | `low_volatility_quality.yaml` | 低波质量 | quality | 低波动、浅回撤、估值不过热且数据质量可靠的防守型候选 |
 | `capital_heat.yaml` | 资金热度 | momentum | 资金活跃、量价同步但未极端过热，避免高换手脉冲过拟合 |
+| `main_force.yaml` | 主力选股 | momentum | 使用宿主提供的问财近 90 天区间主力净流入候选池，按统一因子和 LLM 链路排序 |
 | `oversold_reversal.yaml` | 超跌反转 | reversal | 跌幅可控且流动性仍在的修复候选，叠加适度活跃度确认 |
 | `balanced_alpha.yaml` | 均衡多因子 | framework | 综合估值、资金、动量、稳定性、反转和主题热度 |
 | `momentum_quality.yaml` | 趋势质量 | framework | 兼顾趋势确认、质量约束、主题热度和组合分散的中线候选发现 |

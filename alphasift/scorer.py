@@ -15,6 +15,7 @@ _FACTOR_COLUMNS = {
     "size": "factor_size_score",
     "theme_heat": "factor_theme_heat_score",
     "topic_alignment": "factor_topic_alignment_score",
+    "main_force": "factor_main_force_score",
 }
 _DEFAULT_SCORING_PROFILE = {
     "momentum_base": 60.0,
@@ -146,7 +147,24 @@ def _compute_factor_scores(df: pd.DataFrame, config: ScreeningConfig | None = No
         "size": _compute_size_score(df),
         "theme_heat": _compute_theme_heat_score(df, profile),
         "topic_alignment": _compute_topic_alignment_score(df, profile),
+        "main_force": _compute_main_force_score(df),
     }
+
+
+# 按宿主候选池的区间主力净流入及涨幅余量计算主力因子分。
+def _compute_main_force_score(df: pd.DataFrame) -> pd.Series:
+    if "main_fund_inflow_cny" not in df.columns:
+        return pd.Series(50.0, index=df.index)
+
+    inflow = pd.to_numeric(df["main_fund_inflow_cny"], errors="coerce")
+    inflow_score = _rank_score(inflow.where(inflow > 0), lower_is_better=False, na_score=0)
+    if "range_change_pct" not in df.columns:
+        return inflow_score.clip(0, 100)
+
+    range_change = pd.to_numeric(df["range_change_pct"], errors="coerce")
+    headroom_score = (100 - range_change.clip(lower=-70, upper=30).add(70)).clip(0, 100)
+    headroom_score = headroom_score.where(range_change.notna(), 0)
+    return (inflow_score * 0.85 + headroom_score * 0.15).clip(0, 100)
 
 
 def _scoring_profile(config: ScreeningConfig) -> dict[str, float]:

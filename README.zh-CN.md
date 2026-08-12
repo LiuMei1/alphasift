@@ -321,6 +321,7 @@ tushare → sina → efinance → akshare_em → em_datacenter
 | `quality_value` | 价值 | 估值合理、流动性充足、波动不过热 |
 | `low_volatility_quality` | 质量 | 用日 K 波动、回撤、ATR 和数据质量约束做防守型质量筛选 |
 | `capital_heat` | 动量 | 资金活跃、量价同步但未极端过热 |
+| `main_force` | 动量 | 使用宿主提供的问财近 90 天区间主力资金净流入候选池 |
 | `oversold_reversal` | 反转 | 跌幅可控且流动性仍在的修复候选 |
 | `balanced_alpha` | 框架 | 综合估值、资金、动量、稳定性的通用发现策略 |
 | `momentum_quality` | 框架 | 兼顾趋势确认和基本面质量的中线候选发现 |

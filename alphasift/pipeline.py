@@ -38,6 +38,7 @@ from alphasift.strategy import load_all_strategies
 logger = logging.getLogger(__name__)
 
 
+# 执行策略筛选并支持宿主按稳定契约提供初始候选池。
 def screen(
     strategy: str,
     *,
@@ -128,14 +129,18 @@ def screen(
     daily_limit = daily_enrich_max_candidates or config.daily_enrich_max_candidates
     snapshot_filters = without_daily_filters(screening.hard_filters) if daily_needed else screening.hard_filters
 
-    # 2. Fetch snapshot
-    snapshot_df = fetch_snapshot_with_fallback(
-        config.snapshot_source_priority,
-        required_columns=_required_snapshot_columns(snapshot_filters),
-        fallback_snapshot_path=config.fallback_snapshot_path,
-        fallback_max_age_hours=config.snapshot_fallback_max_age_hours,
-        market=market,
-    )
+    # 2. Fetch snapshot, or consume an explicitly supplied host candidate pool.
+    snapshot_df = _load_host_initial_candidates(context, strategy=strategy, market=market)
+    if snapshot_df is None:
+        snapshot_df = fetch_snapshot_with_fallback(
+            config.snapshot_source_priority,
+            required_columns=_required_snapshot_columns(snapshot_filters),
+            fallback_snapshot_path=config.fallback_snapshot_path,
+            fallback_max_age_hours=config.snapshot_fallback_max_age_hours,
+            market=market,
+        )
+    else:
+        degradation.append("Initial candidate pool supplied by host contract v1")
     effective_industry_map_files = (
         list(industry_map_files)
         if industry_map_files is not None
@@ -160,6 +165,7 @@ def screen(
     snapshot_count = len(snapshot_df)
     snapshot_source = str(snapshot_df.attrs.get("snapshot_source", ""))
     source_errors = [str(item) for item in snapshot_df.attrs.get("source_errors", [])]
+    degradation.extend(str(item) for item in snapshot_df.attrs.get("host_warnings", []))
     degradation.extend(f"Snapshot source fallback: {item}" for item in source_errors)
     if bool(snapshot_df.attrs.get("fallback_used")):
         stale_age = snapshot_df.attrs.get("stale_age_hours")
@@ -479,6 +485,7 @@ def screen(
     )
 
 
+# 将评分后的候选表转换为稳定的 Pick 结果。
 def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
     """Convert DataFrame rows to Pick objects."""
     picks = []
@@ -499,6 +506,14 @@ def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
             change_pct=float(row.get("change_pct", row.get("涨跌幅", 0)) or 0),
             amount=float(row.get("amount", row.get("成交额", 0)) or 0),
             total_mv=_safe_float(row.get("total_mv", row.get("总市值"))),
+            main_fund_inflow_cny=_safe_float(row.get("main_fund_inflow_cny")),
+            range_change_pct=_safe_float(row.get("range_change_pct")),
+            data_complete=bool(row.get("data_complete", True)),
+            missing_optional_fields=(
+                list(row.get("missing_optional_fields"))
+                if isinstance(row.get("missing_optional_fields"), (list, tuple, set))
+                else []
+            ),
             turnover_rate=_safe_float(row.get("turnover_rate", row.get("换手率"))),
             volume_ratio=_safe_float(row.get("volume_ratio", row.get("量比"))),
             pe_ratio=_safe_float(row.get("pe_ratio", row.get("市盈率"))),
@@ -538,6 +553,47 @@ def _df_to_picks(df: pd.DataFrame) -> list[Pick]:
             factor_scores=factor_scores,
         ))
     return picks
+
+
+# 从宿主上下文读取版本化的初始候选池并保留来源诊断。
+def _load_host_initial_candidates(
+    context: dict[str, object] | None,
+    *,
+    strategy: str,
+    market: str,
+) -> pd.DataFrame | None:
+    if not isinstance(context, dict):
+        return None
+    host = context.get("host")
+    if not isinstance(host, dict) or host.get("contract_version") != "1":
+        return None
+    provider = host.get("get_initial_candidates")
+    if not callable(provider):
+        return None
+
+    payload = provider(strategy=strategy, market=market)
+    if payload is None:
+        return None
+    if isinstance(payload, pd.DataFrame):
+        frame = payload.copy()
+        metadata: dict[str, object] = {}
+    elif isinstance(payload, dict):
+        status = str(payload.get("status") or "available")
+        if status not in {"available", "partial"}:
+            detail = str(payload.get("message") or "host candidate pool unavailable")
+            raise RuntimeError(f"Host initial candidate pool {status}: {detail}")
+        frame = pd.DataFrame(payload.get("candidates") or [])
+        metadata = payload
+    else:
+        raise TypeError("Host initial candidate pool must be a DataFrame or mapping")
+
+    if frame.empty:
+        raise RuntimeError("Host initial candidate pool returned no candidates")
+    frame.attrs["snapshot_source"] = str(metadata.get("source") or "host")
+    frame.attrs["source_errors"] = [str(item) for item in metadata.get("source_errors", []) or []]
+    frame.attrs["host_warnings"] = [str(item) for item in metadata.get("warnings", []) or []]
+    frame.attrs["fallback_used"] = False
+    return frame
 
 
 def _sort_screened_candidates(df: pd.DataFrame, screening=None) -> pd.DataFrame:

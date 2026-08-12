@@ -4,6 +4,21 @@ from alphasift.models import ScreeningConfig
 from alphasift.scorer import compute_screen_scores
 
 
+# 验证主力因子优先奖励更高的正区间主力净流入。
+def test_main_force_factor_favors_higher_interval_inflow():
+    df = pd.DataFrame([
+        {"code": "high", "main_fund_inflow_cny": 2_000_000_000, "range_change_pct": 10.0},
+        {"code": "low", "main_fund_inflow_cny": 500_000_000, "range_change_pct": 10.0},
+    ])
+
+    scored = compute_screen_scores(
+        df,
+        ScreeningConfig(factor_weights={"main_force": 1.0}),
+    ).set_index("code")
+
+    assert scored.loc["high", "factor_main_force_score"] > scored.loc["low", "factor_main_force_score"]
+
+
 def test_value_factor_favors_lower_positive_pe_and_pb():
     df = pd.DataFrame(
         [

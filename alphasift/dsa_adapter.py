@@ -61,6 +61,7 @@ def list_strategies(context: Dict[str, Any] | None = None) -> List[Dict[str, Any
     ]
 
 
+# 通过稳定适配器执行选股并透传宿主候选池上下文。
 def screen(
     strategy: str,
     *,
@@ -87,6 +88,7 @@ def screen(
         "strategy_category": result.strategy_category,
         "market": result.market,
         "snapshot_count": result.snapshot_count,
+        "snapshot_source": result.snapshot_source,
         "after_filter_count": result.after_filter_count,
         "llm_ranked": result.llm_ranked,
         "llm_market_view": result.llm_market_view,
@@ -133,6 +135,10 @@ def _normalize_pick(raw: Any, fallback_rank: int) -> Dict[str, Any]:
         "change_pct": item.get("change_pct"),
         "amount": item.get("amount"),
         "industry": item.get("industry") or "",
+        "main_fund_inflow_cny": item.get("main_fund_inflow_cny"),
+        "range_change_pct": item.get("range_change_pct"),
+        "data_complete": item.get("data_complete", True),
+        "missing_optional_fields": list(item.get("missing_optional_fields") or []),
         "factor_scores": dict(item.get("factor_scores") or {}),
         "dsa_context": dict(item.get("dsa_context") or {}),
         "dsa_news": list(item.get("dsa_news") or []),

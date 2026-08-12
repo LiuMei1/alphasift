@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 新增 `main_force` 策略、主力净流入因子，以及 `context["host"]` v1 初始候选池契约；宿主候选不可用时明确失败，不回退为普通市场快照
+- DSA 稳定适配器新增主力净流入、区间涨跌幅和数据完整性结果字段
 - 支持 DSA 通过 `context["dsa"]` 注入候选 provider，AlphaSift 会在 L1 初筛后、LLM 重排前补充 DSA 行情、基本面和新闻上下文
 - `dsa_adapter.screen()` 现在会透传 DSA context，并在候选结果中保留 `dsa_context`、`dsa_news` 和 `dsa_analysis_summary`
 - LLM ranking prompt 会读取候选上的 DSA provider context，便于排序阶段利用 DSA 已有数据能力

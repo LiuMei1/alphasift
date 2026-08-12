@@ -1,0 +1,34 @@
+# 主力选股策略
+name: main_force
+display_name: 主力选股
+description: 关注近 90 天主力资金净流入靠前、区间涨幅未明显透支且市值适中的 A 股候选
+version: "1.0"
+category: momentum
+tags: [momentum, main_fund_inflow, iwencai]
+style:
+  risk_profile: balanced
+  holding_period: medium_term
+  execution_style: momentum
+  market_regime: [risk_on, neutral]
+  capital_profile: institutional_flow
+  ui_badge: 主力
+
+screening:
+  enabled: true
+  market_scope: [cn]
+  hard_filters:
+    exclude_st: true
+    market_cap_min: 5000000000
+    market_cap_max: 500000000000
+  factor_weights:
+    main_force: 0.65
+    value: 0.10
+    size: 0.10
+    stability: 0.15
+  ranking_hints: |
+    优先关注：
+    1. 问财近 90 天区间主力资金净流入规模及其与区间涨幅的匹配程度
+    2. 主力净流入明显但区间涨幅尚未透支的候选
+    3. 行业集中度、估值、盈利质量与资金信号之间的冲突
+    4. 数据缺失、来源时效以及信号可能失效的条件
+  max_output: 20
