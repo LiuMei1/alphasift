@@ -62,11 +62,17 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
                     risk_level="medium",
                     risk_flags=["valuation"],
                     price=1688.0,
+                    pe_ratio=10.0,
+                    pb_ratio=1.0,
                     revenue_yoy=18.6,
                     net_profit_yoy=125.3,
+                    dividend_yield_pct=1.2,
+                    debt_ratio_pct=28.5,
+                    float_market_cap_cny=3_200_000_000,
                     report_period="2026-03-31",
                     revenue_report_period="2026-03-31",
                     net_profit_report_period="2025-12-31",
+                    financial_report_period="2026-03-31",
                     source="iwencai",
                     source_status="partial",
                     source_observed_at="2026-08-12T06:00:00+00:00",
@@ -112,11 +118,17 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
     assert payload["candidates"][0]["llm_thesis"] == "LLM likes the setup"
     assert payload["candidates"][0]["reason"] == "LLM likes the setup"
     assert payload["candidates"][0]["price"] == 1688.0
+    assert payload["candidates"][0]["pe_ratio"] == 10.0
+    assert payload["candidates"][0]["pb_ratio"] == 1.0
     assert payload["candidates"][0]["revenue_yoy"] == 18.6
     assert payload["candidates"][0]["net_profit_yoy"] == 125.3
+    assert payload["candidates"][0]["dividend_yield_pct"] == 1.2
+    assert payload["candidates"][0]["debt_ratio_pct"] == 28.5
+    assert payload["candidates"][0]["float_market_cap_cny"] == 3_200_000_000
     assert payload["candidates"][0]["report_period"] == "2026-03-31"
     assert payload["candidates"][0]["revenue_report_period"] == "2026-03-31"
     assert payload["candidates"][0]["net_profit_report_period"] == "2025-12-31"
+    assert payload["candidates"][0]["financial_report_period"] == "2026-03-31"
     assert payload["candidates"][0]["source"] == "iwencai"
     assert payload["candidates"][0]["source_status"] == "partial"
     assert payload["candidates"][0]["trade_date"] == "2026-08-12"

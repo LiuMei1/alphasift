@@ -38,6 +38,7 @@ def test_list_strategies_returns_enabled_strategies_only():
         "capital_heat",
         "dual_low",
         "low_price_bull",
+        "low_valuation",
         "low_volatility_quality",
         "main_force",
         "momentum_quality",
@@ -61,6 +62,24 @@ def test_small_cap_growth_loads_from_both_strategy_directories(path):
     assert strategy.name == "small_cap_growth"
     assert strategy.screening.factor_weights["small_cap"] == pytest.approx(0.65)
     assert strategy.screening.market_scope == ["cn"]
+
+
+# 验证低估值策略两份配置一致、只支持 A 股且保留严格正估值下界。
+@pytest.mark.parametrize(
+    "path",
+    [Path("strategies/low_valuation.yaml"), Path("alphasift/strategies/low_valuation.yaml")],
+)
+def test_low_valuation_loads_from_both_strategy_directories(path):
+    strategy = load_strategy(path)
+
+    assert strategy.name == "low_valuation"
+    assert strategy.display_name == "低估值策略"
+    assert strategy.screening.market_scope == ["cn"]
+    assert strategy.screening.hard_filters.pe_ttm_min == 0
+    assert strategy.screening.hard_filters.pe_ttm_max == 20
+    assert strategy.screening.hard_filters.pb_min == 0
+    assert strategy.screening.hard_filters.pb_max == 1.5
+    assert strategy.screening.factor_weights["low_float_market_cap"] == pytest.approx(0.50)
 
 
 # 验证净利增长两份策略配置同步、仅支持 A 股且不引入增长率评分因子。

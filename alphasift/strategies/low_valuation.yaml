@@ -1,0 +1,38 @@
+# 低估值策略
+name: low_valuation
+display_name: 低估值策略
+description: 关注低 PE、低 PB、具备股息回报且资产负债率较低的沪深主板候选
+version: "1.0"
+category: value
+tags: [value, low_valuation, dividend, low_debt, iwencai]
+style:
+  risk_profile: defensive
+  holding_period: medium_term
+  execution_style: selective
+  market_regime: [risk_off, neutral, range_bound]
+  capital_profile: small_float_cap
+  ui_badge: 低估
+
+screening:
+  enabled: true
+  market_scope: [cn]
+  hard_filters:
+    exclude_st: true
+    pe_ttm_min: 0
+    pe_ttm_max: 20
+    pb_min: 0
+    pb_max: 1.5
+  factor_weights:
+    low_float_market_cap: 0.50
+    value: 0.25
+    stability: 0.20
+    liquidity: 0.05
+  ranking_hints: |
+    PE、PB、股息率、资产负债率和板块排除是宿主候选池已严格复核的固定门槛，不得放宽或改写。
+    优先关注：
+    1. 低估值是否来自盈利恶化、周期顶部或一次性因素
+    2. 股息是否由可持续现金流和稳定分红支持
+    3. 低负债口径对应的报告期以及行业可比性
+    4. 财务数据时效、字段完整性和估值修复催化
+    5. 最终组合是否过度集中于银行、地产、周期等单一行业
+  max_output: 20

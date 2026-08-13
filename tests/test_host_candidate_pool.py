@@ -237,7 +237,53 @@ def test_small_cap_growth_consumes_host_fields_and_favors_smaller_market_cap(mon
     assert result.picks[0].net_profit_report_period == "2025-12-31"
 
 
-@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull", "profit_growth", "small_cap_growth"])
+# 验证低估值策略保留估值与审计字段并按低流通市值方向评分。
+def test_low_valuation_consumes_host_fields_and_favors_smaller_float_market_cap(monkeypatch):
+    monkeypatch.setattr(
+        "alphasift.pipeline.fetch_snapshot_with_fallback",
+        lambda *_args, **_kwargs: pytest.fail("snapshot provider must not run"),
+    )
+
+    def get_initial_candidates(*, strategy: str, market: str):
+        assert strategy == "low_valuation"
+        assert market == "cn"
+        return {
+            "status": "partial",
+            "source": "iwencai",
+            "candidates": [
+                {
+                    "code": "600001", "name": "较小流通市值", "pe_ratio": 10.0, "pb_ratio": 1.0,
+                    "dividend_yield_pct": 1.2, "debt_ratio_pct": 28.0,
+                    "float_market_cap_cny": 1_500_000_000, "financial_report_period": "2026-03-31",
+                    "source": "iwencai", "source_status": "partial", "data_complete": False,
+                    "missing_optional_fields": ["trade_date"],
+                },
+                {
+                    "code": "600002", "name": "较大流通市值", "pe_ratio": 12.0, "pb_ratio": 1.2,
+                    "dividend_yield_pct": 1.5, "debt_ratio_pct": 20.0,
+                    "float_market_cap_cny": 4_500_000_000, "financial_report_period": "2026-03-31",
+                    "source": "iwencai",
+                },
+            ],
+        }
+
+    result = screen(
+        "low_valuation",
+        max_output=2,
+        use_llm=False,
+        context={"host": {"contract_version": "1", "get_initial_candidates": get_initial_candidates}},
+        config=_config(),
+    )
+
+    assert result.picks[0].code == "600001"
+    assert result.picks[0].factor_scores["low_float_market_cap"] > result.picks[1].factor_scores["low_float_market_cap"]
+    assert result.picks[0].dividend_yield_pct == 1.2
+    assert result.picks[0].debt_ratio_pct == 28.0
+    assert result.picks[0].financial_report_period == "2026-03-31"
+    assert result.picks[0].missing_optional_fields == ["trade_date"]
+
+
+@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull", "profit_growth", "small_cap_growth", "low_valuation"])
 def test_host_only_strategy_rejects_missing_host_context(monkeypatch, strategy):
     monkeypatch.setattr(
         "alphasift.pipeline.fetch_snapshot_with_fallback",

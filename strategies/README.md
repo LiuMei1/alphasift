@@ -32,6 +32,7 @@
 | `capital_heat.yaml` | 资金热度 | momentum | 资金活跃、量价同步但未极端过热，避免高换手脉冲过拟合 |
 | `main_force.yaml` | 主力选股 | momentum | 使用宿主提供的问财近 90 天区间主力净流入候选池，按统一因子和 LLM 链路排序 |
 | `low_price_bull.yaml` | 低价擒牛 | growth | 使用宿主严格复核的低价、高净利润同比候选池，以低成交额因子为主要评分方向 |
+| `low_valuation.yaml` | 低估值策略 | value | 使用宿主严格复核的正 PE/PB、股息、低负债沪深主板候选池，以低流通市值因子为主要评分方向 |
 | `profit_growth.yaml` | 净利增长 | growth | 使用宿主严格复核的深圳主板、净利润同比不低于 10% 候选池，以低成交额因子为主要评分方向 |
 | `small_cap_growth.yaml` | 小市值策略 | growth | 使用宿主严格复核的小市值、营收增长和净利润增长候选池，以小市值因子为主要评分方向 |
 | `oversold_reversal.yaml` | 超跌反转 | reversal | 跌幅可控且流动性仍在的修复候选，叠加适度活跃度确认 |

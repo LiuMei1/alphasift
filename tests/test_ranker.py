@@ -483,3 +483,38 @@ def test_ranking_prompt_includes_small_cap_growth_fields():
     assert "small_cap" in prompt
     assert "price=unknown" in prompt
     assert "amount=unknown" in prompt
+
+
+# 验证低估值指标、报告期、来源状态和完整性进入 LLM 候选上下文。
+def test_ranking_prompt_includes_low_valuation_fields():
+    prompt = _build_ranking_prompt(
+        [Pick(
+            rank=1,
+            code="600001",
+            name="低估值样本",
+            final_score=90,
+            screen_score=90,
+            pe_ratio=10.0,
+            pb_ratio=1.0,
+            dividend_yield_pct=1.2,
+            debt_ratio_pct=28.5,
+            float_market_cap_cny=3_200_000_000,
+            financial_report_period="2026-03-31",
+            source="iwencai",
+            source_status="partial",
+            data_complete=False,
+            missing_optional_fields=["trade_date"],
+            factor_scores={"low_float_market_cap": 96.0},
+        )],
+        hints="估值、股息和负债率是固定硬门槛。",
+        context="",
+    )
+
+    assert "PE=10.0" in prompt and "PB=1.0" in prompt
+    assert "dividend_yield=1.2%" in prompt
+    assert "debt_ratio=28.5%" in prompt
+    assert "float_market_cap=3200000000" in prompt
+    assert "financial_period=2026-03-31" in prompt
+    assert "source_status=partial" in prompt
+    assert "data_complete=False" in prompt
+    assert "low_float_market_cap" in prompt

@@ -14,6 +14,7 @@ _FACTOR_COLUMNS = {
     "stability": "factor_stability_score",
     "size": "factor_size_score",
     "small_cap": "factor_small_cap_score",
+    "low_float_market_cap": "factor_low_float_market_cap_score",
     "theme_heat": "factor_theme_heat_score",
     "topic_alignment": "factor_topic_alignment_score",
     "main_force": "factor_main_force_score",
@@ -136,6 +137,7 @@ def _normalized_factor_weights(config: ScreeningConfig) -> dict[str, float]:
     return {factor: weight / total for factor, weight in weights.items()}
 
 
+# 计算全部可用因子分供策略按权重组合。
 def _compute_factor_scores(df: pd.DataFrame, config: ScreeningConfig | None = None) -> dict[str, pd.Series]:
     config = config or ScreeningConfig()
     profile = _scoring_profile(config)
@@ -148,6 +150,7 @@ def _compute_factor_scores(df: pd.DataFrame, config: ScreeningConfig | None = No
         "stability": _compute_stability_score(df, profile),
         "size": _compute_size_score(df),
         "small_cap": _compute_small_cap_score(df),
+        "low_float_market_cap": _compute_low_float_market_cap_score(df),
         "theme_heat": _compute_theme_heat_score(df, profile),
         "topic_alignment": _compute_topic_alignment_score(df, profile),
         "main_force": _compute_main_force_score(df),
@@ -420,6 +423,15 @@ def _compute_small_cap_score(df: pd.DataFrame) -> pd.Series:
 
     mv = pd.to_numeric(df["total_mv"], errors="coerce")
     return _rank_score(mv.where(mv > 0), lower_is_better=True, na_score=0)
+
+
+# 按候选池内流通市值从小到大计算低流通市值因子分。
+def _compute_low_float_market_cap_score(df: pd.DataFrame) -> pd.Series:
+    if "float_market_cap_cny" not in df.columns:
+        return pd.Series(0.0, index=df.index)
+
+    market_cap = pd.to_numeric(df["float_market_cap_cny"], errors="coerce")
+    return _rank_score(market_cap.where(market_cap > 0), lower_is_better=True, na_score=0)
 
 
 def _compute_theme_heat_score(df: pd.DataFrame, profile: dict[str, float]) -> pd.Series:

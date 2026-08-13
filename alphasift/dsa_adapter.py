@@ -103,6 +103,7 @@ def screen(
     }
 
 
+# 将 Pick 标准化为向后兼容的 DSA 稳定候选结构。
 def _normalize_pick(raw: Any, fallback_rank: int) -> Dict[str, Any]:
     item = _to_plain(raw)
     if not isinstance(item, dict):
@@ -137,11 +138,17 @@ def _normalize_pick(raw: Any, fallback_rank: int) -> Dict[str, Any]:
         "industry": item.get("industry") or "",
         "main_fund_inflow_cny": item.get("main_fund_inflow_cny"),
         "range_change_pct": item.get("range_change_pct"),
+        "pe_ratio": item.get("pe_ratio"),
+        "pb_ratio": item.get("pb_ratio"),
         "revenue_yoy": item.get("revenue_yoy"),
         "net_profit_yoy": item.get("net_profit_yoy"),
+        "dividend_yield_pct": item.get("dividend_yield_pct"),
+        "debt_ratio_pct": item.get("debt_ratio_pct"),
+        "float_market_cap_cny": item.get("float_market_cap_cny"),
         "report_period": item.get("report_period") or "",
         "revenue_report_period": item.get("revenue_report_period") or "",
         "net_profit_report_period": item.get("net_profit_report_period") or "",
+        "financial_report_period": item.get("financial_report_period") or "",
         "trade_date": item.get("trade_date") or "",
         "market": item.get("market") or "",
         "board": item.get("board") or "",

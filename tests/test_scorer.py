@@ -275,3 +275,20 @@ def test_small_cap_factor_favors_smaller_market_cap_without_changing_size_factor
     assert small_cap.loc["small", "factor_small_cap_score"] > small_cap.loc["large", "factor_small_cap_score"]
     assert small_cap.loc["invalid", "factor_small_cap_score"] == 0
     assert size.loc["large", "factor_size_score"] > size.loc["small", "factor_size_score"]
+
+
+# 验证低流通市值因子方向正确且无效值不获得中性分。
+def test_low_float_market_cap_factor_favors_smaller_positive_value():
+    df = pd.DataFrame([
+        {"code": "small", "float_market_cap_cny": 1_000_000_000},
+        {"code": "large", "float_market_cap_cny": 5_000_000_000},
+        {"code": "invalid", "float_market_cap_cny": 0},
+    ])
+
+    scored = compute_screen_scores(
+        df,
+        ScreeningConfig(factor_weights={"low_float_market_cap": 1.0}),
+    ).set_index("code")
+
+    assert scored.loc["small", "factor_low_float_market_cap_score"] > scored.loc["large", "factor_low_float_market_cap_score"]
+    assert scored.loc["invalid", "factor_low_float_market_cap_score"] == 0
