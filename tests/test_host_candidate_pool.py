@@ -133,6 +133,56 @@ def test_low_price_bull_consumes_host_fields_and_favors_lower_amount(monkeypatch
     assert result.picks[0].source_status == "partial"
 
 
+# 验证净利增长完整保留宿主字段并只按既有低成交额因子区分候选。
+def test_profit_growth_consumes_host_fields_and_favors_lower_amount(monkeypatch):
+    monkeypatch.setattr(
+        "alphasift.pipeline.fetch_snapshot_with_fallback",
+        lambda *_args, **_kwargs: pytest.fail("snapshot provider must not run"),
+    )
+
+    def get_initial_candidates(*, strategy: str, market: str):
+        assert strategy == "profit_growth"
+        assert market == "cn"
+        return {
+            "status": "partial",
+            "source": "iwencai",
+            "warnings": ["optional_fields_missing:industry"],
+            "candidates": [
+                {
+                    "code": "000001", "name": "低成交额", "net_profit_yoy": 10.0,
+                    "amount": 10_000_000, "report_period": "2026-03-31", "trade_date": "2026-08-13",
+                    "market": "SZ", "board": "main", "source": "iwencai", "source_status": "partial",
+                    "source_observed_at": "2026-08-13T06:00:00+00:00",
+                    "source_fields": {"net_profit_yoy": {"column": "净利润同比增长率[20260331]", "raw": 10.0}},
+                    "data_complete": False, "missing_optional_fields": ["industry"],
+                },
+                {
+                    "code": "000002", "name": "高增长高成交额", "net_profit_yoy": 500.0,
+                    "amount": 100_000_000, "report_period": "2026-03-31", "trade_date": "2026-08-13",
+                    "market": "SZ", "board": "main", "source": "iwencai",
+                },
+            ],
+        }
+
+    result = screen(
+        "profit_growth",
+        max_output=2,
+        use_llm=False,
+        context={"host": {"contract_version": "1", "get_initial_candidates": get_initial_candidates}},
+        config=_config(),
+    )
+
+    assert [pick.code for pick in result.picks] == ["000001", "000002"]
+    assert result.picks[0].factor_scores["low_amount"] > result.picks[1].factor_scores["low_amount"]
+    assert result.picks[0].net_profit_yoy == 10.0
+    assert result.picks[0].report_period == "2026-03-31"
+    assert result.picks[0].trade_date == "2026-08-13"
+    assert result.picks[0].market == "SZ"
+    assert result.picks[0].board == "main"
+    assert result.picks[0].source_fields["net_profit_yoy"]["raw"] == 10.0
+    assert result.picks[0].missing_optional_fields == ["industry"]
+
+
 # 验证小市值策略保留两项增长率和各自报告期并按小市值方向评分。
 def test_small_cap_growth_consumes_host_fields_and_favors_smaller_market_cap(monkeypatch):
     monkeypatch.setattr(
@@ -187,7 +237,7 @@ def test_small_cap_growth_consumes_host_fields_and_favors_smaller_market_cap(mon
     assert result.picks[0].net_profit_report_period == "2025-12-31"
 
 
-@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull", "small_cap_growth"])
+@pytest.mark.parametrize("strategy", ["main_force", "low_price_bull", "profit_growth", "small_cap_growth"])
 def test_host_only_strategy_rejects_missing_host_context(monkeypatch, strategy):
     monkeypatch.setattr(
         "alphasift.pipeline.fetch_snapshot_with_fallback",

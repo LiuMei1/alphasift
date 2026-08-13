@@ -42,6 +42,7 @@ def test_list_strategies_returns_enabled_strategies_only():
         "main_force",
         "momentum_quality",
         "oversold_reversal",
+        "profit_growth",
         "quality_value",
         "shrink_pullback",
         "small_cap_growth",
@@ -60,6 +61,26 @@ def test_small_cap_growth_loads_from_both_strategy_directories(path):
     assert strategy.name == "small_cap_growth"
     assert strategy.screening.factor_weights["small_cap"] == pytest.approx(0.65)
     assert strategy.screening.market_scope == ["cn"]
+
+
+# 验证净利增长两份策略配置同步、仅支持 A 股且不引入增长率评分因子。
+@pytest.mark.parametrize(
+    "path",
+    [Path("strategies/profit_growth.yaml"), Path("alphasift/strategies/profit_growth.yaml")],
+)
+def test_profit_growth_loads_from_both_strategy_directories(path):
+    strategy = load_strategy(path)
+
+    assert strategy.name == "profit_growth"
+    assert strategy.display_name == "净利增长"
+    assert strategy.screening.market_scope == ["cn"]
+    assert strategy.screening.factor_weights == {
+        "low_amount": pytest.approx(0.65),
+        "stability": pytest.approx(0.20),
+        "value": pytest.approx(0.10),
+        "size": pytest.approx(0.05),
+    }
+    assert "net_profit" not in strategy.screening.factor_weights
 
 
 def test_dual_low_strategy_uses_dynamic_snapshot_signals():

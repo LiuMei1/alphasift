@@ -430,6 +430,31 @@ def test_ranking_prompt_includes_low_price_bull_source_fields():
     assert "low_amount" in prompt
 
 
+# 验证净利增长的完整宿主来源字段进入 LLM 候选上下文。
+def test_ranking_prompt_includes_profit_growth_source_fields():
+    prompt = _build_ranking_prompt(
+        [Pick(
+            rank=1, code="000001", name="净利增长样本", final_score=90, screen_score=90,
+            amount=25_000_000, net_profit_yoy=10.0, report_period="2026-03-31",
+            trade_date="2026-08-13", market="SZ", board="main", source="iwencai",
+            source_status="partial", source_observed_at="2026-08-13T06:30:00+00:00",
+            source_fields={"net_profit_yoy": {"column": "净利润同比增长率[20260331]", "raw": 10.0}},
+            data_complete=False, missing_optional_fields=["industry"], factor_scores={"low_amount": 96.0},
+        )],
+        hints="增长率是固定硬门槛。",
+        context="",
+    )
+
+    assert "net_profit_yoy=10.0%" in prompt
+    assert "amount=25000000" in prompt
+    assert "report_period=2026-03-31" in prompt
+    assert "trade_date=2026-08-13" in prompt
+    assert "market=SZ" in prompt and "board=main" in prompt
+    assert "source_status=partial" in prompt
+    assert "净利润同比增长率[20260331]" in prompt
+    assert "data_complete=False" in prompt
+
+
 # 验证小市值策略的增长率和独立报告期进入 LLM 候选上下文。
 def test_ranking_prompt_includes_small_cap_growth_fields():
     prompt = _build_ranking_prompt(

@@ -70,6 +70,12 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
                     source="iwencai",
                     source_status="partial",
                     source_observed_at="2026-08-12T06:00:00+00:00",
+                    trade_date="2026-08-12",
+                    market="SZ",
+                    board="main",
+                    source_fields={"net_profit_yoy": {"column": "净利润同比增长率[20260331]", "raw": 125.3}},
+                    data_complete=False,
+                    missing_optional_fields=["industry"],
                     industry="Baijiu",
                     factor_scores={"value": 88.0, "liquidity": 72.0},
                     dsa_context={
@@ -113,6 +119,12 @@ def test_screen_returns_stable_dsa_contract(monkeypatch):
     assert payload["candidates"][0]["net_profit_report_period"] == "2025-12-31"
     assert payload["candidates"][0]["source"] == "iwencai"
     assert payload["candidates"][0]["source_status"] == "partial"
+    assert payload["candidates"][0]["trade_date"] == "2026-08-12"
+    assert payload["candidates"][0]["market"] == "SZ"
+    assert payload["candidates"][0]["board"] == "main"
+    assert payload["candidates"][0]["source_fields"]["net_profit_yoy"]["raw"] == 125.3
+    assert payload["candidates"][0]["data_complete"] is False
+    assert payload["candidates"][0]["missing_optional_fields"] == ["industry"]
     assert payload["candidates"][0]["industry"] == "Baijiu"
     assert payload["candidates"][0]["dsa_context"]["enriched"] is True
     assert payload["candidates"][0]["dsa_news"][0]["title"] == "贵州茅台公告"

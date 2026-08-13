@@ -132,7 +132,7 @@ def screen(
     # 2. Fetch snapshot, or consume an explicitly supplied host candidate pool.
     snapshot_df = _load_host_initial_candidates(context, strategy=strategy, market=market)
     if snapshot_df is None:
-        if strategy in {"main_force", "low_price_bull", "small_cap_growth"}:
+        if strategy in {"main_force", "low_price_bull", "profit_growth", "small_cap_growth"}:
             raise RuntimeError(f"Strategy {strategy} requires a host initial candidate pool")
         snapshot_df = fetch_snapshot_with_fallback(
             config.snapshot_source_priority,
